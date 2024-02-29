@@ -11,7 +11,7 @@ def exchange_date(date_string):
 def get_job_build_count(start_time, end_time, job_url):
     api_url = f'{job_url}/api/json?tree=builds[timestamp,result]'
     
-    response = requests.get(api_url)
+    response = requests.get(api_url, auth=('admin', '123456'))
     data = response.json()
 
     # 统计一周内的发布次数
@@ -23,17 +23,18 @@ def get_job_build_count(start_time, end_time, job_url):
         #     count += 1
 
         if build_date >= start_time and build_date <= end_time and build['result'] == 'SUCCESS':
-            count +=1
+            count += 1
 
     return count
 
 
-start_time = '2023-09-18'
-end_time = '2023-09-22'
+start_time = '2024-02-19'
+end_time = '2024-02-24'
 
 # 统计输出7天内每个项目的发布次数，发布次数为0的不统计
-url = 'https://jenkins.sz.inrobot.cloud/api/python?tree=jobs[name,url]' # 获取所有的job信息
-res = requests.get(url)
+url = 'https://jenkins.sz.inrobot.cloud/api/python?tree=jobs[name,url]'  # 获取所有的job信息
+# print(url)
+res = requests.get(url, auth=('admin', '123456'))
 data = []
 dict = {}
 parts = []
@@ -45,14 +46,16 @@ for job in res.json()['jobs']:
         parts = job['name'].split('-', 1)
         parts.append(build_count)
         data.append(parts)
-        
-        
-system_counts = {}
 
+system_counts = {}
+# print(data)
 # 遍历数据列表
 for item in data:
-    environment, system, count = item
-    
+    try:
+        environment, system, count = item
+    except ValueError:
+        print(f"Invalid data format: {item}")
+
     # 检查系统名称是否已经存在于统计字典中
     if system in system_counts:
         system_counts[system][environment] = count
@@ -75,4 +78,4 @@ for system, counts in system_counts.items():
 print('sit_count:{}'.format(sit_count))
 print('uat_count:{}'.format(uat_count))
 print('smzx_count:{}'.format(smzx_count))
-        # print(f"{job['name']} 的发布次数为: {build_count}")
+# print(f"{job['name']} 的发布次数为: {build_count}")
